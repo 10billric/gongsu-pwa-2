@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>공수계산</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#22262B">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="공수계산">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" href="./icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-dark:#22262B;
+    --bg-dark-2:#2C3037;
+    --page-bg:#4CAF6D;
+    --paper:#F6F4EE;
+    --paper-2:#EDEAE1;
+    --ink:#22262B;
+    --ink-soft:#4A4E54;
+    --muted:#8A8E93;
+    --line:#DCD8CC;
+    --accent:#E85D25;
+    --accent-ink:#FFFFFF;
+    --blue:#3E6E8E;
+    --success:#4F7A4B;
+    --danger:#B5432B;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--page-bg);}
+  body{
+    font-family:'IBM Plex Sans KR', sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:8px 8px 10px;
+  }
+  .app{
+    width:100%;
+    max-width:460px;
+    background:var(--paper);
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:0 20px 40px rgba(0,0,0,.35);
+    display:flex;
+    flex-direction:column;
+  }
+  /* header */
+  .head{
+    background:var(--bg-dark);
+    color:var(--paper);
+    padding:10px 14px 8px;
+    position:relative;
+  }
+  .head h1{
+    font-family:'Archivo',sans-serif;
+    font-weight:800;
+    font-size:20px;
+    margin:0 0 1px;
+    letter-spacing:.2px;
+  }
+  .head .sub{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    color:#B9BCC2;
+  }
+  /* body */
+  .view{
+    padding:8px 10px 10px;
+    flex:1;
+    display:none;
+  }
+  .view.active{display:block;}
+
+  /* date/month nav */
+  .nav-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:var(--paper-2);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:6px 4px;
+    margin-bottom:8px;
+  }
+  .nav-btn{
+    width:32px;height:32px;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:8px;
+    background:transparent;
+    border:none;
+    font-size:19px;
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .nav-btn:active{background:var(--line);}
+  .nav-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:600;
+    font-size:16px;
+    text-align:center;
+  }
+  .nav-label .today-btn{
+    display:block;
+    font-family:'IBM Plex Sans KR',sans-serif;
+    font-weight:500;
+    font-size:12px;
+    color:var(--blue);
+    margin-top:2px;
+    cursor:pointer;
+  }
+
+  /* today summary strip */
+  .summary-strip{
+    display:flex;
+    gap:6px;
+    margin-bottom:8px;
+  }
+  .summary-box{
+    flex:1;
+    background:var(--ink);
+    color:var(--paper);
+    border-radius:var(--radius);
+    padding:8px 10px;
+  }
+  .summary-box .label{font-size:12px;color:#B9BCC2;margin-bottom:2px;}
+  .summary-box .value{
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:600;
+    font-size:16px;
+  }
+  .summary-box.accent{background:var(--accent);}
+  .summary-box.accent .label{color:#FFE4D6;}
+
+  /* worker card (entry) */
+  .worker-card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:8px 10px;
+    margin-bottom:6px;
+  }
+  .worker-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:6px;
+  }
+  .worker-name{font-weight:700;font-size:16px;}
+  .worker-job{color:var(--muted);font-size:13px;margin-left:5px;font-weight:400;}
+  .worker-rate{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+    color:var(--ink-soft);
+    display:flex;
+    align-items:center;
+    gap:4px;
+    white-space:nowrap;
+  }
+  .worker-rate input{
+    width:88px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:5px 6px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+    text-align:right;
+    background:var(--paper-2);
+  }
+  .worker-rate input:focus{
+    background:#fff;
+    border-color:var(--blue);
+    outline:none;
+  }
+  .gongsu-row{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:5px;
+  }
+  .chip{
+    flex:1;
+    text-align:center;
+    padding:8px 0;
+    border-radius:7px;
+    border:1px solid var(--line);
+    background:var(--paper-2);
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:600;
+    font-size:15px;
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .chip.selected{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+  }
+  .chip.custom-active{
+    background:var(--blue);
+    border-color:var(--blue);
+    color:#fff;
+  }
+  .custom-input-wrap{
+    margin-top:5px;
+    display:none;
+  }
+  .custom-input-wrap.show{display:flex;gap:6px;}
+  .custom-input-wrap input{
+    flex:1;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:7px 8px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:15px;
+  }
+
+
+  .cal-grid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:3px;
+  }
+  .cal-weekday{
+    text-align:center;
+    font-size:12px;
+    font-weight:600;
+    color:var(--muted);
+    padding-bottom:3px;
+  }
+  .cal-weekday.sun{color:var(--danger);}
+  .cal-weekday.sat{color:var(--blue);}
+  .cal-cell{
+    aspect-ratio:1/0.78;
+    border-radius:6px;
+    border:1px solid var(--line);
+    background:#fff;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+  }
+  .cal-cell.empty{border:none;background:transparent;cursor:default;}
+  .cal-cell .cal-day{
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:600;
+    font-size:14px;
+    color:var(--ink);
+  }
+  .cal-cell.sun .cal-day{color:var(--danger);}
+  .cal-cell.sat .cal-day{color:var(--blue);}
+  .cal-cell .cal-total{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--accent);
+    font-weight:600;
+    margin-top:0;
+  }
+  .cal-cell.today{border:2px solid var(--ink);}
+  .cal-cell.picked{
+    border:2px solid var(--accent);
+    background:#FBE4D6;
+  }
+  .cal-cell.has-data{background:#FDF1EA;}
+  .cal-cell.sun{background:#FBDCDA;}
+  .cal-cell.sat{background:#DCE8F5;}
+  .note{
+    font-size:12.5px;
+    color:var(--muted);
+    margin-top:8px;
+    line-height:1.4;
+  }
+
+  /* workers management */
+  .form-card{
+    background:var(--paper-2);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:10px 10px;
+    margin-bottom:8px;
+  }
+  .form-title{font-weight:700;font-size:15px;margin-bottom:6px;}
+  .field{margin-bottom:8px;}
+  .field label{
+    display:block;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-bottom:3px;
+    font-weight:500;
+  }
+  .field input{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:8px 8px;
+    font-family:'IBM Plex Sans KR',sans-serif;
+    font-size:15.5px;
+    background:#fff;
+  }
+  .field select{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:8px 8px;
+    font-family:'IBM Plex Sans KR',sans-serif;
+    font-size:15.5px;
+    background:#fff;
+  }
+  .field input[type="date"]{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:15px;
+    padding:8px 6px;
+    width:100%;
+  }
+  .check-field{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-bottom:6px;
+  }
+  .check-field input{width:auto;}
+  .check-field label{margin:0;font-size:14px;color:var(--ink-soft);font-weight:500;}
+  .btn{
+    width:100%;
+    padding:10px 0;
+    border-radius:8px;
+    border:none;
+    font-family:'IBM Plex Sans KR',sans-serif;
+    font-weight:600;
+    font-size:15.5px;
+    cursor:pointer;
+  }
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:active{background:#CC4E1A;}
+  #calRate{
+    padding:16px 10px 8px;
+    font-size:18px;
+    line-height:normal;
+  }
+  #applyCalBtn{
+    padding:13px 0;
+    font-size:17px;
+  }
+
+  .loading{
+    text-align:center;
+    padding:40px 10px;
+    color:var(--muted);
+    font-size:14px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="head">
+    <h1>공수계산</h1>
+    <div class="sub" id="headerSub">공수 관리 · 로딩중</div>
+  </div>
+
+  <!-- 달력 뷰 -->
+  <div class="view active" id="view-calendar">
+    <div class="nav-row">
+      <div class="nav-btn" id="prevCalMonth">‹</div>
+      <div class="nav-label"><span id="calMonthLabel">-</span></div>
+      <div class="nav-btn" id="nextCalMonth">›</div>
+    </div>
+    <div class="cal-grid">
+      <div class="cal-weekday sun">일</div>
+      <div class="cal-weekday">월</div>
+      <div class="cal-weekday">화</div>
+      <div class="cal-weekday">수</div>
+      <div class="cal-weekday">목</div>
+      <div class="cal-weekday">금</div>
+      <div class="cal-weekday sat">토</div>
+    </div>
+    <div class="cal-grid" id="calGrid" style="margin-top:4px;"></div>
+    <div class="form-card" style="margin-top:14px;">
+      <div class="field">
+        <label>공수</label>
+        <div class="gongsu-row" id="calGongsuRow"></div>
+        <div class="custom-input-wrap" id="calCustomWrap">
+          <input type="number" step="0.1" id="calCustomInput" placeholder="예) 0.25">
+        </div>
+      </div>
+      <div class="field">
+        <label>시작일</label>
+        <input type="date" id="calStart">
+      </div>
+      <div class="field">
+        <label>종료일</label>
+        <input type="date" id="calEnd">
+      </div>
+      <div class="check-field">
+        <input type="checkbox" id="calExcludeSunday">
+        <label for="calExcludeSunday">일요일 제외</label>
+      </div>
+      <div class="field">
+        <label>일당 단가 (원)</label>
+        <input type="number" id="calRate" inputmode="numeric">
+      </div>
+      <button class="btn btn-primary" id="applyCalBtn">적용</button>
+    </div>
+    <div class="summary-strip" style="margin-top:14px;">
+      <div class="summary-box">
+        <div class="label">이번 달 총 공수</div>
+        <div class="value" id="calMonthGongsu">0</div>
+      </div>
+      <div class="summary-box accent">
+        <div class="label">이번 달 총 금액</div>
+        <div class="value" id="calMonthAmount">0원</div>
+      </div>
+    </div>
+    <div class="note">날짜를 탭하면 그 날짜가 시작일/종료일에 채워집니다.</div>
+  </div>
+
+</div>
+
+<script>
+const GONGSU_OPTIONS = [0, 0.25, 0.5, 1, 1.5, 2];
+
+let workers = [];
+let monthCache = {}; // { 'YYYY-MM': {workerId:{day:gongsu}} }
+let ready = false;
+
+function pad(n){ return n.toString().padStart(2,'0'); }
+function dateKey(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function monthKey(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}`; }
+function fmtWon(n){ return Math.round(n).toLocaleString('ko-KR') + '원'; }
+function fmtMonthLabel(d){ return `${d.getFullYear()}년 ${d.getMonth()+1}월`; }
+function daysInMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(); }
+function uid(){ return 'w_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+
+const STORAGE_PREFIX = 'gongsu:';
+function storeGet(key){
+  try{
+    const v = localStorage.getItem(STORAGE_PREFIX + key);
+    return Promise.resolve(v===null ? null : { value: v });
+  }catch(e){ return Promise.resolve(null); }
+}
+function storeSet(key, value){
+  try{ localStorage.setItem(STORAGE_PREFIX + key, value); }
+  catch(e){ console.error('localStorage set failed', e); }
+  return Promise.resolve(true);
+}
+
+async function loadWorkers(){
+  try{
+    const res = await storeGet('workers');
+    workers = res ? JSON.parse(res.value) : [];
+  }catch(e){ workers = []; }
+}
+async function saveWorkers(){
+  try{ await storeSet('workers', JSON.stringify(workers)); }
+  catch(e){ console.error('save workers failed', e); }
+}
+async function loadMonthRecords(mKey){
+  if(monthCache[mKey]) return monthCache[mKey];
+  try{
+    const res = await storeGet('records:' + mKey);
+    monthCache[mKey] = res ? JSON.parse(res.value) : {};
+  }catch(e){ monthCache[mKey] = {}; }
+  return monthCache[mKey];
+}
+async function saveMonthRecords(mKey){
+  try{ await storeSet('records:' + mKey, JSON.stringify(monthCache[mKey])); }
+  catch(e){ console.error('save records failed', e); }
+}
+
+// ---------- calendar view ----------
+let calendarDate = new Date();
+let calSelectedGongsu = 1;
+
+document.getElementById('prevCalMonth').onclick = ()=>{ calendarDate.setMonth(calendarDate.getMonth()-1); renderCalendarView(); };
+document.getElementById('nextCalMonth').onclick = ()=>{ calendarDate.setMonth(calendarDate.getMonth()+1); renderCalendarView(); };
+
+function initCalFormChips(){
+  const row = document.getElementById('calGongsuRow');
+  row.innerHTML = GONGSU_OPTIONS.map(opt=>
+    `<div class="chip" data-cval="${opt}">${opt}</div>`
+  ).join('') + `<div class="chip" id="calCustomChip">직접</div>`;
+  updateCalChipSelection(false);
+
+  row.querySelectorAll('.chip[data-cval]').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      calSelectedGongsu = parseFloat(chip.dataset.cval);
+      document.getElementById('calCustomWrap').classList.remove('show');
+      updateCalChipSelection(false);
+    });
+  });
+  document.getElementById('calCustomChip').addEventListener('click', ()=>{
+    const wrap = document.getElementById('calCustomWrap');
+    wrap.classList.add('show');
+    wrap.querySelector('input').focus();
+    updateCalChipSelection(true);
+  });
+  document.getElementById('calCustomInput').addEventListener('change', e=>{
+    const v = parseFloat(e.target.value);
+    if(!isNaN(v)) calSelectedGongsu = v;
+  });
+}
+function updateCalChipSelection(customActive){
+  document.querySelectorAll('#calGongsuRow .chip[data-cval]').forEach(c=>{
+    c.classList.toggle('selected', !customActive && parseFloat(c.dataset.cval)===calSelectedGongsu);
+  });
+  document.getElementById('calCustomChip').classList.toggle('custom-active', !!customActive);
+}
+
+document.getElementById('applyCalBtn').onclick = async ()=>{
+  if(workers.length===0) return;
+  const worker = workers[0];
+  const startVal = document.getElementById('calStart').value;
+  const endVal = document.getElementById('calEnd').value;
+  const rateVal = parseFloat(document.getElementById('calRate').value);
+  const excludeSunday = document.getElementById('calExcludeSunday').checked;
+
+  if(!startVal || !endVal){ alert('시작일과 종료일을 선택해주세요.'); return; }
+  const start = new Date(startVal + 'T00:00:00');
+  const end = new Date(endVal + 'T00:00:00');
+  if(start > end){ alert('종료일이 시작일보다 빠를 수 없습니다.'); return; }
+
+  if(!isNaN(rateVal)){
+    worker.rate = rateVal;
+    await saveWorkers();
+  }
+
+  const touchedMonths = new Set();
+  let cur = new Date(start);
+  while(cur <= end){
+    const mKey = monthKey(cur);
+    const dKey = cur.getDate().toString();
+    const records = await loadMonthRecords(mKey);
+    if(excludeSunday && cur.getDay()===0){
+      if(records[worker.id] && records[worker.id][dKey]!==undefined){
+        delete records[worker.id][dKey];
+        touchedMonths.add(mKey);
+      }
+    }else{
+      if(!records[worker.id]) records[worker.id] = {};
+      records[worker.id][dKey] = calSelectedGongsu;
+      touchedMonths.add(mKey);
+    }
+    cur.setDate(cur.getDate()+1);
+  }
+  for(const mKey of touchedMonths){
+    await saveMonthRecords(mKey);
+  }
+  renderCalendarView();
+};
+
+async function renderCalendarView(){
+  document.getElementById('calMonthLabel').textContent = fmtMonthLabel(calendarDate);
+  document.getElementById('headerSub').textContent = fmtMonthLabel(calendarDate);
+  const mKey = monthKey(calendarDate);
+  const records = await loadMonthRecords(mKey);
+  const grid = document.getElementById('calGrid');
+
+  initCalFormChips();
+  const firstOfMonth = `${calendarDate.getFullYear()}-${pad(calendarDate.getMonth()+1)}-01`;
+  const lastOfMonth = `${calendarDate.getFullYear()}-${pad(calendarDate.getMonth()+1)}-${pad(daysInMonth(calendarDate))}`;
+  document.getElementById('calStart').value = firstOfMonth;
+  document.getElementById('calEnd').value = lastOfMonth;
+  document.getElementById('calRate').value = (workers.length && workers[0].rate) ? workers[0].rate : '';
+
+  const year = calendarDate.getFullYear();
+  const month = calendarDate.getMonth();
+  const firstDow = new Date(year, month, 1).getDay();
+  const numDays = daysInMonth(calendarDate);
+  const today = new Date();
+  const isSameMonth = today.getFullYear()===year && today.getMonth()===month;
+
+  const dayTotals = {};
+  for(let d=1; d<=numDays; d++) dayTotals[d] = {g:0, a:0};
+  workers.forEach(w=>{
+    const rec = records[w.id] || {};
+    Object.keys(rec).forEach(dayStr=>{
+      const d = parseInt(dayStr);
+      if(dayTotals[d]){
+        const v = rec[dayStr] || 0;
+        dayTotals[d].g += v;
+        dayTotals[d].a += v * (w.rate||0);
+      }
+    });
+  });
+
+  let monthG=0, monthA=0;
+  Object.values(dayTotals).forEach(t=>{ monthG+=t.g; monthA+=t.a; });
+  document.getElementById('calMonthGongsu').textContent = monthG;
+  document.getElementById('calMonthAmount').textContent = fmtWon(monthA);
+
+  let html = '';
+  for(let i=0;i<firstDow;i++){
+    html += `<div class="cal-cell empty"></div>`;
+  }
+  for(let d=1; d<=numDays; d++){
+    const dow = (firstDow + d - 1) % 7;
+    const cls = ['cal-cell'];
+    if(dow===0) cls.push('sun');
+    if(dow===6) cls.push('sat');
+    if(isSameMonth && d===today.getDate()) cls.push('today');
+    if(dayTotals[d].g>0) cls.push('has-data');
+    const totalTxt = dayTotals[d].g>0 ? `<div class="cal-total">${dayTotals[d].g}</div>` : '';
+    html += `<div class="${cls.join(' ')}" data-day="${d}"><div class="cal-day">${d}</div>${totalTxt}</div>`;
+  }
+  grid.innerHTML = html;
+
+  grid.querySelectorAll('.cal-cell[data-day]').forEach(cell=>{
+    cell.addEventListener('click', ()=>{
+      const d = parseInt(cell.dataset.day);
+      const picked = `${year}-${pad(month+1)}-${pad(d)}`;
+      document.getElementById('calStart').value = picked;
+      document.getElementById('calEnd').value = picked;
+      grid.querySelectorAll('.cal-cell.picked').forEach(c=>c.classList.remove('picked'));
+      cell.classList.add('picked');
+      document.getElementById('calStart').closest('.form-card').scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  });
+}
+
+function escapeHtml(str){
+  return (str||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+// ---------- init ----------
+(async function init(){
+  await loadWorkers();
+  if(workers.length===0){
+    workers.push({ id: uid(), name: '본인', job: '', rate: 0 });
+    await saveWorkers();
+  }
+  await renderCalendarView();
+})();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js').catch(e=>console.error('SW 등록 실패', e));
+  });
+}
+</script>
+</body>
+</html>
